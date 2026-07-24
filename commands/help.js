@@ -44,7 +44,7 @@ module.exports = {
                 "Đủ **10/10** → mở khóa **👑 Master Collector**\n" +
                 "— role đặc biệt KHÔNG THỂ quay ra được!\n" +
                 `${LINE}\n` +
-                "❓ Role hiếm nhất: ✨ Con Cưng RNG (tỉ lệ chỉ 1%)\n" +
+                "❓ Role hiếm nhất: ✨ King (tỉ lệ chỉ 1%)\n" +
                 "💡 Mẹo: treo voice qua đêm vẫn được tính giờ!"
             )
             .setFooter({ text: "Lootbox Role System • Chỉ cần nhớ 1 lệnh: /panel" })
