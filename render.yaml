@@ -1,5 +1,5 @@
 services:
-  - type: worker
+  - type: web
     name: lootbox-role-bot
     runtime: node
     plan: free

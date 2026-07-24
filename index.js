@@ -1,5 +1,14 @@
 require("dotenv").config();
 
+// ── Kiểm tra biến môi trường trước khi làm bất cứ gì ──
+if (!process.env.TOKEN) {
+    console.error("❌ THIẾU BIẾN MÔI TRƯỜNG: TOKEN");
+    console.error("   → Local: tạo file .env với dòng  TOKEN=<token bot>");
+    console.error("   → Render: tab Environment → Add Environment Variable → Key: TOKEN");
+    console.error("   Lấy token tại: discord.com/developers → Bot → Reset Token");
+    process.exit(1);
+}
+
 const {
     Client,
     GatewayIntentBits,
@@ -89,7 +98,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 });
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN).catch((err) => {
+    console.error("❌ Đăng nhập Discord thất bại:", err.message);
+    if (err.code === "TokenInvalid") {
+        console.error("   → Token sai hoặc đã bị thu hồi. Reset Token trong Developer Portal");
+        console.error("     rồi cập nhật lại biến TOKEN (Render: tab Environment).");
+    }
+    process.exit(1);
+});
 
 // Render free (Web Service) yêu cầu mở cổng HTTP — server tí hon để giữ bot sống
 if (process.env.PORT) {
