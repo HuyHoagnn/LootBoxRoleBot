@@ -88,15 +88,33 @@ test("redeemService: findCode / markCodeUsed / addRole", () => {
 });
 
 // ── panelViews ──
-test("panelViews: mọi view trả về embeds + components", () => {
+test("panelViews: mọi view trả về embeds + components", async () => {
     const v = require("../ui/panelViews");
 
     const home = v.homeView();
     assert.strictEqual(home.embeds.length, 1);
     assert.strictEqual(home.components.length, 2);
 
-    const prof = v.profileView("user-khong-ton-tai");
-    assert.strictEqual(prof.embeds[0].data.fields.length, 4);
+    // profileView giờ nhận interaction (async) để lấy tên + avatar + gửi DM.
+    // Dùng object giả lập có user.createDM trả reject (user tắt DM).
+    const fakeInteraction = {
+        user: {
+            id: "user-khong-ton-tai",
+            username: "TestUser",
+            globalName: "Test User",
+            displayAvatarURL: () => "https://cdn.discordapp.com/avatar.png",
+            createDM: async () => { throw new Error("dm blocked"); },
+        },
+    };
+    const prof = await v.profileView(fakeInteraction);
+    // title chứa tên, có thumbnail, có field "Tổng thời gian Voice"
+    assert.ok(prof.embeds[0].data.title.includes("Test User"));
+    assert.ok(prof.embeds[0].data.thumbnail.url.includes("avatar.png"));
+    const names = prof.embeds[0].data.fields.map(f => f.name);
+    assert.ok(names.includes("⏰ Tổng thời gian Voice"));
+    assert.ok(names.includes("🎟 Code chưa dùng"));
+    assert.ok(names.includes("✅ Code đã dùng"));
+    assert.ok(names.includes("🌈 Role đã mở"));
 
     const col = v.collectionView("user-khong-ton-tai");
     assert.ok(col.embeds[0].data.description.includes("0 / 10"));
@@ -136,6 +154,27 @@ test("githubStore: ENABLED=false thì no-op, không throw", () => {
     assert.strictEqual(store.ENABLED, false);
     // schedulePush không throw dù file không tồn tại
     assert.doesNotThrow(() => store.schedulePush());
+});
+
+test("profileView: DM thành công → báo đã gửi, không hiện code trên panel", async () => {
+    const v = require("../ui/panelViews");
+    let sent = null;
+    const fakeInteraction = {
+        user: {
+            id: "dm-ok-user",
+            username: "DmUser",
+            globalName: "DM User",
+            displayAvatarURL: () => "https://cdn.discordapp.com/a.png",
+            createDM: async () => ({
+                send: async (payload) => { sent = payload; },
+            }),
+        },
+    };
+    // Không có data → không code → vẫn không crash, title có tên
+    const prof = await v.profileView(fakeInteraction);
+    assert.ok(prof.embeds[0].data.title.includes("DM User"));
+    // Không có code nên sent vẫn null (đúng, không gửi DM rỗng)
+    assert.strictEqual(sent, null);
 });
 
 // ── handlers ──

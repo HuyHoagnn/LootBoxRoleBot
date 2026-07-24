@@ -46,8 +46,11 @@ module.exports = async (interaction) => {
         case "panel_home":
             return interaction.update(homeView());
 
-        case "panel_profile":
-            return interaction.update(profileView(interaction.user.id));
+        case "panel_profile": {
+            await interaction.deferUpdate();
+            const view = await profileView(interaction);
+            return interaction.editReply(view);
+        }
 
         case "panel_claim":
             return interaction.update(claimView(interaction.user.id));

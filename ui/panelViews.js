@@ -88,24 +88,89 @@ function homeView() {
 }
 
 // ── 👤 Hồ sơ ──
-function profileView(userId) {
+// Truyền interaction để lấy tên + avatar user.
+async function profileView(interaction) {
+    const userId = interaction.user.id;
     const { user } = getUser(userId);
+
+    const u = interaction.user;
+    const displayName = u.globalName || u.username;
 
     const hours = Math.floor(user.voiceTime / 60);
     const minutes = user.voiceTime % 60;
-    const unusedCodes = user.codes.filter(c => !c.used).length;
+
+    const usedCodes = user.codes.filter(c => c.used);
+    const unusedCodes = user.codes.filter(c => !c.used);
+
+    // ── Gửi DM code chưa dùng (nếu user cho phép) ──
+    let dmStatus = "Không có code chưa dùng.";
+    if (unusedCodes.length > 0) {
+        try {
+            const dm = await u.createDM();
+            const codeList = unusedCodes.map(c => c.code).join("\n");
+            await dm.send({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(COLOR)
+                        .setTitle("🎟 Code chưa dùng của bạn")
+                        .setDescription("```" + codeList + "```")
+                        .setFooter({ text: "Lootbox Role System • Dùng tại /panel → 🎲 Đổi Role" })
+                        .setTimestamp(),
+                ],
+            });
+            dmStatus = `✅ Đã gửi **${unusedCodes.length}** code chưa dùng vào DM của bạn!`;
+        } catch {
+            // User tắt DM → hiện luôn trên panel
+            dmStatus = "⚠️ Không gửi được DM (bạn đã tắt tin nhắn riêng). Code hiển thị bên dưới.";
+        }
+    }
 
     const embed = new EmbedBuilder()
         .setColor(COLOR)
-        .setTitle("👤 Hồ sơ")
+        .setTitle(`👤 Hồ sơ — ${displayName}`)
+        .setThumbnail(u.displayAvatarURL({ size: 256, dynamic: true }))
         .addFields(
-            { name: "⏰ Tổng Voice", value: `${hours} giờ ${minutes} phút`, inline: true },
-            { name: "🎟 Code chưa dùng", value: `${unusedCodes}`, inline: true },
-            { name: "🎁 Code đã nhận", value: `${user.codes.length}`, inline: true },
+            { name: "⏰ Tổng thời gian Voice", value: `${hours} giờ ${minutes} phút`, inline: true },
+            { name: "🎟 Code chưa dùng", value: `${unusedCodes.length}`, inline: true },
+            { name: "✅ Code đã dùng", value: `${usedCodes.length}`, inline: true },
             { name: "🌈 Role đã mở", value: `${user.roles.length} / ${roles.length}`, inline: true },
+            { name: "📨 Thông báo Code", value: dmStatus },
         )
         .setFooter({ text: "Lootbox Role System" })
         .setTimestamp();
+
+    // Nếu không gửi được DM (user tắt) → hiển thị code trực tiếp trên panel
+    if (unusedCodes.length > 0 && dmStatus.startsWith("⚠️")) {
+        embed.addFields({
+            name: "🎟 Danh sách Code chưa dùng",
+            value: "```" + unusedCodes.map(c => c.code).join("\n") + "```",
+        });
+    }
+
+    // Code đã dùng: liệt kê
+    if (usedCodes.length > 0) {
+        const usedLines = usedCodes
+            .map(c => {
+                const t = c.usedAt ? new Date(c.usedAt).toLocaleString("vi-VN") : "?";
+                return `• ${c.code} — ${t}`;
+            })
+            .join("\n");
+        embed.addFields({
+            name: "✅ Code đã dùng",
+            value: usedLines.length > 1024 ? usedLines.slice(0, 1020) + "..." : usedLines,
+        });
+    }
+
+    // Role đã mở: liệt kê
+    if (user.roles.length > 0) {
+        const roleLines = user.roles
+            .map(r => `• ${r.name}`)
+            .join("\n");
+        embed.addFields({
+            name: "🌈 Role đã mở",
+            value: roleLines.length > 1024 ? roleLines.slice(0, 1020) + "..." : roleLines,
+        });
+    }
 
     return { embeds: [embed], components: navRows() };
 }
