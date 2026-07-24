@@ -2,6 +2,8 @@ const { EmbedBuilder } = require("discord.js");
 
 function generateBill(member, role, code, voiceTime) {
 
+    const duration = require("./format").formatDuration(voiceTime);
+
     return new EmbedBuilder()
 
         .setColor("#8b5cf6")
@@ -26,7 +28,7 @@ function generateBill(member, role, code, voiceTime) {
 
             {
                 name: "🕒 Voice",
-                value: `${voiceTime} phút`
+                value: duration
             },
 
             {

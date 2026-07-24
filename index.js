@@ -55,19 +55,39 @@ for (const file of fs.readdirSync(eventsPath).filter(f => f.endsWith(".js"))) {
 client.once(Events.ClientReady, () => {
     console.log(`✅ ${client.user.tag} đã online!`);
 
+    const { loadUsers, saveUsers } = require("./utils/database");
+    const users = loadUsers();
+
+    // ── MIGRATE data cũ (voiceTime/claimedMinutes tính bằng PHÚT)
+    //    sang GIÂY. Chỉ chạy 1 lần: phát hiện field `claimedMinutes` (cũ).
+    //    Sau migrate xóa field đó để không chạy lại (tránh nhân 60 lần nữa).
+    let migrated = 0;
+    for (const id in users) {
+        const u = users[id];
+        if ("claimedMinutes" in u) {
+            u.voiceTime = (u.voiceTime ?? 0) * 60;          // phút → giây
+            u.claimedSeconds = (u.claimedMinutes ?? 0) * 60;
+            delete u.claimedMinutes;
+            migrated++;
+        }
+        u.claimedSeconds ??= 0;
+    }
+    if (migrated > 0) {
+        saveUsers(users);
+        console.log(`🔁 Đã migrate ${migrated} user từ phút sang giây`);
+    }
+
     // Xử lý thời gian khi bot restart: nếu user đang trong voice (joinAt tồn tại),
     // thời gian TỪ LÚC VÀO VOICE ĐẾN LÚC RESTART sẽ BỊ MẤT nếu chỉ reset null.
     // Giải pháp: cộng dồn khoảng đó vào voiceTime, rồi đặt joinAt = now để
     // tiếp tục đếm từ hiện tại (KHÔNG mất thời gian, cũng KHÔNG tính dư).
-    const { loadUsers, saveUsers } = require("./utils/database");
-    const users = loadUsers();
     let carry = 0;
     const now = Date.now();
     for (const id in users) {
         const u = users[id];
         if (u.joinAt) {
-            const mins = Math.round((now - u.joinAt) / 60000);
-            if (mins > 0) u.voiceTime += mins;
+            const secs = Math.round((now - u.joinAt) / 1000);
+            if (secs > 0) u.voiceTime += secs;
             u.joinAt = now; // tiếp tục đếm từ lúc bot sống lại
             carry++;
         }

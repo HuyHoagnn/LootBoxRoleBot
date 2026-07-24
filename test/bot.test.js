@@ -21,7 +21,7 @@ test.after(() => {
 // ── config ──
 test("config: các hằng số hợp lệ", () => {
     const config = require("../config");
-    assert.ok(Number.isInteger(config.MINUTES_PER_CODE) && config.MINUTES_PER_CODE > 0);
+    assert.ok(Number.isInteger(config.SECONDS_PER_CODE) && config.SECONDS_PER_CODE > 0);
     assert.strictEqual(typeof config.TEST_MODE, "boolean");
 });
 
@@ -67,7 +67,7 @@ test("redeemService: findCode / markCodeUsed / addRole", () => {
     const users = loadUsers();
     users["test-user"] = {
         voiceTime: 100,
-        claimedMinutes: 0,
+        claimedSeconds: 0,
         codes: [{ code: "TEST-CODE", used: false, createdAt: Date.now(), usedAt: null }],
         roles: [],
     };

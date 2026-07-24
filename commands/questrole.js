@@ -11,7 +11,7 @@ const {
 const generateCode = require("../utils/codeGenerator");
 
 const {
-    MINUTES_PER_CODE,
+    SECONDS_PER_CODE,
 } = require("../config");
 
 module.exports = {
@@ -37,16 +37,16 @@ module.exports = {
         }
 
         user.voiceTime ??= 0;
-        user.claimedMinutes ??= 0;
+        user.claimedSeconds ??= 0;
         user.codes ??= [];
         user.roles ??= [];
 
-        const availableMinutes =
-            user.voiceTime - user.claimedMinutes;
+        const availableSeconds =
+            user.voiceTime - user.claimedSeconds;
 
         const totalCodes =
             Math.floor(
-                availableMinutes / MINUTES_PER_CODE
+                availableSeconds / SECONDS_PER_CODE
             );
 
         if (totalCodes <= 0) {
@@ -62,8 +62,8 @@ module.exports = {
                         .setTitle("❌ Chưa đủ thời gian")
 
                         .setDescription(
-                            `Bạn cần **${MINUTES_PER_CODE} phút** để nhận 1 Code.\n\n` +
-                            `⏰ Hiện tại còn **${availableMinutes} phút** có thể quy đổi.`
+                            `Bạn cần **${SECONDS_PER_CODE} giây** (${(SECONDS_PER_CODE/60).toFixed(0)} phút) để nhận 1 Code.\n\n` +
+                            `⏰ Hiện tại còn **${availableSeconds} giây** có thể quy đổi.`
                         )
 
                 ]
@@ -104,8 +104,8 @@ module.exports = {
 
         }
 
-        user.claimedMinutes +=
-            totalCodes * MINUTES_PER_CODE;
+        user.claimedSeconds +=
+            totalCodes * SECONDS_PER_CODE;
 
         saveUsers(users);
 
@@ -134,7 +134,7 @@ module.exports = {
                     name: "⏰ Đã quy đổi",
 
                     value:
-                        `${totalCodes * MINUTES_PER_CODE} phút`,
+                        `${totalCodes * SECONDS_PER_CODE} giây`,
 
                     inline: true
                 },

@@ -6,8 +6,9 @@ const {
 } = require("discord.js");
 
 const { loadUsers } = require("../utils/database");
-const { MINUTES_PER_CODE, TEST_MODE } = require("../config");
+const { SECONDS_PER_CODE, TEST_MODE } = require("../config");
 const roles = require("../utils/roles");
+const { formatDuration } = require("../utils/format");
 
 const COLOR = "#8b5cf6";
 const LINE = "━━━━━━━━━━━━━━━━";
@@ -54,12 +55,12 @@ function getUser(userId) {
     const users = loadUsers();
     const user = users[userId] ?? {
         voiceTime: 0,
-        claimedMinutes: 0,
+        claimedSeconds: 0,
         codes: [],
         roles: [],
     };
     user.voiceTime ??= 0;
-    user.claimedMinutes ??= 0;
+    user.claimedSeconds ??= 0;
     user.codes ??= [];
     user.roles ??= [];
     return { users, user };
@@ -96,8 +97,7 @@ async function profileView(interaction) {
     const u = interaction.user;
     const displayName = u.globalName || u.username;
 
-    const hours = Math.floor(user.voiceTime / 60);
-    const minutes = user.voiceTime % 60;
+    const duration = formatDuration(user.voiceTime);
 
     const usedCodes = user.codes.filter(c => c.used);
     const unusedCodes = user.codes.filter(c => !c.used);
@@ -130,7 +130,7 @@ async function profileView(interaction) {
         .setTitle(`👤 Hồ sơ — ${displayName}`)
         .setThumbnail(u.displayAvatarURL({ size: 256, dynamic: true }))
         .addFields(
-            { name: "⏰ Tổng thời gian Voice", value: `${hours} giờ ${minutes} phút`, inline: true },
+            { name: "⏰ Tổng thời gian Voice", value: `${duration}`, inline: true },
             { name: "🎟 Code chưa dùng", value: `${unusedCodes.length}`, inline: true },
             { name: "✅ Code đã dùng", value: `${usedCodes.length}`, inline: true },
             { name: "🌈 Role đã mở", value: `${user.roles.length} / ${roles.length}`, inline: true },
@@ -179,21 +179,20 @@ async function profileView(interaction) {
 function claimView(userId) {
     const { user } = getUser(userId);
 
-    const availableMinutes = user.voiceTime - user.claimedMinutes;
+    const availableSeconds = user.voiceTime - user.claimedSeconds;
     const totalCodes = TEST_MODE
         ? 1
-        : Math.floor(availableMinutes / MINUTES_PER_CODE);
-    const hours = Math.floor(availableMinutes / 60);
-    const mins = availableMinutes % 60;
+        : Math.floor(availableSeconds / SECONDS_PER_CODE);
+    const availableText = formatDuration(availableSeconds);
 
     const embed = new EmbedBuilder()
         .setColor(totalCodes > 0 ? "#22c55e" : "#ef4444")
         .setTitle("🎁 Nhận Code")
         .setDescription(
             `${LINE}\n` +
-            `⏰ Voice có thể quy đổi: **${hours} giờ ${mins} phút**\n` +
+            `⏰ Voice có thể quy đổi: **${availableText}**\n` +
             `🎟 Có thể đổi: **${totalCodes} Code**\n` +
-            `📏 Tỉ lệ: ${MINUTES_PER_CODE} phút = 1 Code\n` +
+            `📏 Tỉ lệ: ${SECONDS_PER_CODE} giây (${(SECONDS_PER_CODE/60).toFixed(0)} phút) = 1 Code\n` +
             LINE
         )
         .setFooter({ text: "Lootbox Role System" })
@@ -250,9 +249,7 @@ async function leaderboardView(guild) {
             const [id, data] = top[i];
             const member = await guild.members.fetch(id).catch(() => null);
             const name = member ? member.user.username : "Unknown";
-            const h = Math.floor((data.voiceTime ?? 0) / 60);
-            const m = (data.voiceTime ?? 0) % 60;
-            lines.push(`${medals[i] ?? `**${i + 1}.**`} ${name} — ${h}h ${m}p`);
+            lines.push(`${medals[i] ?? `**${i + 1}.**`} ${name} — ${formatDuration(data.voiceTime ?? 0)}`);
         }
         description = lines.join("\n");
     }
@@ -277,7 +274,7 @@ function helpView() {
             "**BƯỚC 1 — Treo Voice** 🎧\n" +
             "Vào bất kỳ kênh Voice nào trong server và ở lại đó.\n" +
             "Bot tự động đếm thời gian cho bạn, không cần bật mic.\n" +
-            `👉 Cứ **${MINUTES_PER_CODE} phút** voice = **1 Code**\n\n` +
+            `👉 Cứ **${SECONDS_PER_CODE} giây** (${(SECONDS_PER_CODE/60).toFixed(0)} phút) voice = **1 Code**\n\n` +
 
             "**BƯỚC 2 — Nhận Code** 🎁\n" +
             "Gõ **/panel** → bấm nút **🎁 Nhận Code**\n" +

@@ -4,7 +4,7 @@ const {
     MessageFlags,
 } = require("discord.js");
 
-const { MINUTES_PER_CODE } = require("../config");
+const { SECONDS_PER_CODE } = require("../config");
 
 const LINE = "━━━━━━━━━━━━━━━━";
 
@@ -24,7 +24,7 @@ module.exports = {
                 "**BƯỚC 1 — Treo Voice** 🎧\n" +
                 "Vào bất kỳ kênh Voice nào trong server và ở lại đó.\n" +
                 "Bot tự động đếm thời gian, **không cần bật mic**.\n" +
-                `👉 Cứ **${MINUTES_PER_CODE} phút** voice = **1 Code**\n\n` +
+                `👉 Cứ **${SECONDS_PER_CODE} giây** (${(SECONDS_PER_CODE/60).toFixed(0)} phút) voice = **1 Code**\n\n` +
 
                 "**BƯỚC 2 — Nhận Code** 🎁\n" +
                 "Gõ **/panel** → bấm nút **🎁 Nhận Code**\n" +

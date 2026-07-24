@@ -29,7 +29,7 @@ module.exports = {
 
             const member = await interaction.guild.members.fetch(id).catch(() => null);
 
-            description += `**${i + 1}.** ${member ? member.user.username : "Unknown"} - ${data.voiceTime} phút\n`;
+            description += `**${i + 1}.** ${member ? member.user.username : "Unknown"} - ${require("../utils/format").formatDuration(data.voiceTime)}\n`;
 
         }
 

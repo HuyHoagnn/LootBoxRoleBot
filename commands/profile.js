@@ -26,8 +26,7 @@ module.exports = {
         const codes = user.codes ?? [];
         const roles = user.roles ?? [];
 
-        const hours = Math.floor(voiceTime / 60);
-        const minutes = voiceTime % 60;
+        const duration = require("../utils/format").formatDuration(voiceTime);
 
         await interaction.reply({
             embeds: [
@@ -38,7 +37,7 @@ module.exports = {
                     fields: [
                         {
                             name: "⏰ Tổng thời gian Voice",
-                            value: `${hours} giờ ${minutes} phút`,
+                            value: `${duration}`,
                             inline: true
                         },
                         {

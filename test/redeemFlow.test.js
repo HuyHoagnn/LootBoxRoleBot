@@ -57,10 +57,10 @@ test("redeem: user A KHÔNG được đổi code của user B", () => {
 
     const users = loadUsers();
     users["userA"] = {
-        voiceTime: 0, claimedMinutes: 0, joinAt: null, codes: [], roles: [],
+        voiceTime: 0, claimedSeconds: 0, joinAt: null, codes: [], roles: [],
     };
     users["userB"] = {
-        voiceTime: 0, claimedMinutes: 0, joinAt: null,
+        voiceTime: 0, claimedSeconds: 0, joinAt: null,
         codes: [{ code: "BBBB-9999", used: false, createdAt: Date.now(), usedAt: null }],
         roles: [],
     };
@@ -82,7 +82,7 @@ test("redeem: findCode normalize hoa/thường + khoảng trắng + thiếu gạ
 
     const users = loadUsers();
     users["redeem-case-user"] = {
-        voiceTime: 0, claimedMinutes: 0, joinAt: null,
+        voiceTime: 0, claimedSeconds: 0, joinAt: null,
         codes: [{ code: "ZZZZ-9999", used: false, createdAt: Date.now(), usedAt: null }],
         roles: [],
     };

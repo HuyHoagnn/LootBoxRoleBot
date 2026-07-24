@@ -18,7 +18,7 @@ const {
 
 const { loadUsers, saveUsers } = require("../utils/database");
 const generateCode = require("../utils/codeGenerator");
-const { MINUTES_PER_CODE, TEST_MODE } = require("../config");
+const { SECONDS_PER_CODE, TEST_MODE } = require("../config");
 
 function redeemModal() {
     const modal = new ModalBuilder()
@@ -75,25 +75,25 @@ module.exports = async (interaction) => {
 
             users[userId] ??= {
                 voiceTime: 0,
-                claimedMinutes: 0,
+                claimedSeconds: 0,
                 codes: [],
                 roles: [],
             };
             const user = users[userId];
 
             user.voiceTime ??= 0;
-            user.claimedMinutes ??= 0;
+            user.claimedSeconds ??= 0;
             user.codes ??= [];
             user.roles ??= [];
 
-            const availableMinutes = user.voiceTime - user.claimedMinutes;
+            const availableSeconds = user.voiceTime - user.claimedSeconds;
             const totalCodes = TEST_MODE
                 ? 1
-                : Math.floor(availableMinutes / MINUTES_PER_CODE);
+                : Math.floor(availableSeconds / SECONDS_PER_CODE);
 
             if (totalCodes <= 0) {
                 return interaction.reply({
-                    content: `❌ Chưa đủ thời gian. Cần ${MINUTES_PER_CODE} phút cho 1 Code.`,
+                    content: `❌ Chưa đủ thời gian. Cần ${SECONDS_PER_CODE} giây (${(SECONDS_PER_CODE/60).toFixed(0)} phút) cho 1 Code.`,
                     flags: MessageFlags.Ephemeral,
                 });
             }
@@ -115,7 +115,7 @@ module.exports = async (interaction) => {
             }
 
             if (!TEST_MODE) {
-                user.claimedMinutes += totalCodes * MINUTES_PER_CODE;
+                user.claimedSeconds += totalCodes * SECONDS_PER_CODE;
             }
             saveUsers(users);
 
