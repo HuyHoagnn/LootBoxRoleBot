@@ -90,3 +90,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 client.login(process.env.TOKEN);
+
+// Render free (Web Service) yêu cầu mở cổng HTTP — server tí hon để giữ bot sống
+if (process.env.PORT) {
+    require("http")
+        .createServer((req, res) => res.end("Bot is alive!"))
+        .listen(process.env.PORT, () =>
+            console.log(`🌐 Keepalive server chạy tại cổng ${process.env.PORT}`)
+        );
+}
