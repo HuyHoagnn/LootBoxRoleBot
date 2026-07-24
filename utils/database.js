@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { schedulePush } = require("./githubStore");
 
 const filePath = path.join(__dirname, "../data/users.json");
 
@@ -18,6 +19,9 @@ function loadUsers() {
 
 function saveUsers(users) {
     fs.writeFileSync(filePath, JSON.stringify(users, null, 2));
+    // Đồng bộ lên GitHub (nếu DATA_SYNC_ENABLED=true).
+    // Không await → không làm chậm bot; được debounce 15s trong githubStore.
+    schedulePush();
 }
 
 module.exports = {

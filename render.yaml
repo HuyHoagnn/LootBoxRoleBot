@@ -10,3 +10,9 @@ services:
         sync: false
       - key: CLIENT_ID
         sync: false
+      - key: DATA_SYNC_ENABLED
+        value: "true"
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: "HuyHoagnn/LootBoxRoleBot"

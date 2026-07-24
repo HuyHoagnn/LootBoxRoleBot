@@ -1,0 +1,30 @@
+{
+  "1009474030874673162": {
+    "voiceTime": 0,
+    "claimedMinutes": 0,
+    "joinAt": 1784904170314,
+    "codes": [],
+    "roles": []
+  },
+  "1081394203973660693": {
+    "voiceTime": 0,
+    "claimedMinutes": 0,
+    "joinAt": 1784904197323,
+    "codes": [],
+    "roles": []
+  },
+  "899917757905248256": {
+    "voiceTime": 0,
+    "claimedMinutes": 0,
+    "joinAt": null,
+    "codes": [],
+    "roles": []
+  },
+  "874286442409512980": {
+    "voiceTime": 6,
+    "claimedMinutes": 0,
+    "joinAt": null,
+    "codes": [],
+    "roles": []
+  }
+}

@@ -1,6 +1,7 @@
 node_modules/
 .env
 *.log
-data/users.json
-data/users.backup.json
+# data/users.json GIỜ ĐƯỢC COMMIT — đóng vai trò storage xa (sync qua GitHub API).
+# Chỉ ignore file snapshot tạm của test:
 data/users.test-snapshot.json
+data/users.backup.json

@@ -22,6 +22,7 @@ const path = require("path");
 
 const buttonHandler = require("./handlers/buttonHandler");
 const modalHandler = require("./handlers/modalHandler");
+const { pullOnStart } = require("./utils/githubStore");
 
 const client = new Client({
     intents: [
@@ -53,6 +54,21 @@ for (const file of fs.readdirSync(eventsPath).filter(f => f.endsWith(".js"))) {
 
 client.once(Events.ClientReady, () => {
     console.log(`✅ ${client.user.tag} đã online!`);
+
+    // Fix lỗi cộng dư thời gian: nếu bot restart khi user đang trong
+    // voice, joinAt cũ giữ nguyên → tính sai. Reset hết joinAt về null
+    // để chỉ tính thời gian thực tế từ lúc bot sống lại.
+    const { loadUsers, saveUsers } = require("./utils/database");
+    const users = loadUsers();
+    let reset = 0;
+    for (const id in users) {
+        if (users[id].joinAt) {
+            users[id].joinAt = null;
+            reset++;
+        }
+    }
+    if (reset > 0) saveUsers(users);
+    if (reset > 0) console.log(`🔄 Đã reset joinAt của ${reset} user (tránh tính dư thời gian sau restart)`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -98,14 +114,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 });
 
-client.login(process.env.TOKEN).catch((err) => {
-    console.error("❌ Đăng nhập Discord thất bại:", err.message);
-    if (err.code === "TokenInvalid") {
-        console.error("   → Token sai hoặc đã bị thu hồi. Reset Token trong Developer Portal");
-        console.error("     rồi cập nhật lại biến TOKEN (Render: tab Environment).");
+// Pull data mới nhất từ GitHub trước khi login (chỉ chạy khi bật sync).
+// Đợi xong mới login để tránh race condition (data reset bị pull cũ ghi đè).
+(async () => {
+    try {
+        await pullOnStart();
+    } catch {
+        /* ignore */
     }
-    process.exit(1);
-});
+
+    client.login(process.env.TOKEN).catch((err) => {
+        console.error("❌ Đăng nhập Discord thất bại:", err.message);
+        if (err.code === "TokenInvalid") {
+            console.error("   → Token sai hoặc đã bị thu hồi. Reset Token trong Developer Portal");
+            console.error("     rồi cập nhật lại biến TOKEN (Render: tab Environment).");
+        }
+        process.exit(1);
+    });
+})();
 
 // Render free (Web Service) yêu cầu mở cổng HTTP — server tí hon để giữ bot sống
 if (process.env.PORT) {

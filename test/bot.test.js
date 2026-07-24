@@ -128,6 +128,16 @@ test("commands: load sạch, đủ data + execute", () => {
     }
 });
 
+// ── githubStore ──
+test("githubStore: ENABLED=false thì no-op, không throw", () => {
+    // Biến DATA_SYNC_ENABLED không đặt → coi như dev local
+    delete process.env.DATA_SYNC_ENABLED;
+    const store = require("../utils/githubStore");
+    assert.strictEqual(store.ENABLED, false);
+    // schedulePush không throw dù file không tồn tại
+    assert.doesNotThrow(() => store.schedulePush());
+});
+
 // ── handlers ──
 test("handlers: require sạch", () => {
     assert.strictEqual(typeof require("../handlers/buttonHandler"), "function");
