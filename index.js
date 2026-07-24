@@ -172,4 +172,25 @@ if (process.env.PORT) {
         .listen(process.env.PORT, () =>
             console.log(`🌐 Keepalive server chạy tại cổng ${process.env.PORT}`)
         );
+
+    // ── CHỐNG NGỦ (Render free spin-down sau ~15 phút không có HTTP request) ──
+    // Nguyên nhân bot "chạy 1 lúc rồi không phản hồi": Render cho service ngủ khi
+    // không ai gọi URL. Server trên chỉ TRẢ LỜI request chứ không TỰ TẠO request.
+    // Giải pháp: tự ping URL công khai của chính mình mỗi 10 phút để giữ awake.
+    const selfUrl = process.env.RENDER_EXTERNAL_URL;
+    if (selfUrl) {
+        const pingUrl = selfUrl.replace(/\/$/, "") + "/";
+        setInterval(() => {
+            fetch(pingUrl)
+                .then(() => console.log(`💓 Keepalive ping OK → ${pingUrl}`))
+                .catch((e) => console.warn("⚠️ Keepalive ping lỗi:", e.message));
+        }, 10 * 60 * 1000); // 10 phút (nhỏ hơn ngưỡng ~15 phút của Render)
+        console.log(`💓 Đã bật tự-ping chống ngủ mỗi 10 phút → ${pingUrl}`);
+    } else {
+        console.warn(
+            "⚠️ Không có RENDER_EXTERNAL_URL → không bật tự-ping. " +
+            "Bot có thể bị Render cho ngủ sau ~15 phút. " +
+            "Trên Render, biến này được cấp tự động; nếu thiếu hãy dùng UptimeRobot ping URL service."
+        );
+    }
 }
