@@ -1,3 +1,6 @@
 node_modules/
 .env
 *.log
+data/users.json
+data/users.backup.json
+data/users.test-snapshot.json
