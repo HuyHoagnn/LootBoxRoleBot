@@ -19,7 +19,7 @@ module.exports = {
             };
         }
 
-        // Vào Voice
+        // Vào Voice (từ ngoài vào, hoặc reconnect sau disconnect)
         if (!oldState.channel && newState.channel) {
 
             users[userId].joinAt = Date.now();
@@ -31,16 +31,20 @@ module.exports = {
             return;
         }
 
-        // Rời Voice
+        // Rời Voice (hoặc mất kết nối tạm thời)
         if (oldState.channel && !newState.channel) {
 
             if (!users[userId].joinAt) return;
 
-            const minutes = Math.floor(
+            // Làm tròn đến phút gần nhất (thay vì floor) để ít sai lệch hơn.
+            // VD: 89s -> 1 phút, 91s -> 2 phút. Sai lệch tối đa ±30s.
+            const minutes = Math.round(
                 (Date.now() - users[userId].joinAt) / 60000
             );
 
-            users[userId].voiceTime += minutes;
+            if (minutes > 0) {
+                users[userId].voiceTime += minutes;
+            }
             users[userId].joinAt = null;
 
             saveUsers(users);

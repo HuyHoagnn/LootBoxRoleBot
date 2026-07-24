@@ -73,9 +73,14 @@ test("redeemService: findCode / markCodeUsed / addRole", () => {
     };
     saveUsers(users);
 
-    const found = findCode("TEST-CODE");
+    // findCode truyền ownerId (code cá nhân): chỉ tìm trong kho của user đó
+    const found = findCode("TEST-CODE", "test-user");
     assert.ok(found);
     assert.strictEqual(found.ownerId, "test-user");
+    // user khác không tìm thấy code của test-user
+    assert.strictEqual(findCode("TEST-CODE", "other-user"), null);
+    // fallback không truyền owner vẫn tìm thấy
+    assert.ok(findCode("TEST-CODE"));
     assert.strictEqual(findCode("KHONG-TONTAI"), null);
 
     assert.strictEqual(markCodeUsed("test-user", "TEST-CODE"), true);

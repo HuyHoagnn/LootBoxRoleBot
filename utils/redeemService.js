@@ -11,11 +11,22 @@ function normalizeCode(raw) {
     return s;
 }
 
-function findCode(code) {
+function findCode(code, ownerId) {
 
     code = normalizeCode(code);
     const users = loadUsers();
 
+    // Nếu biết chủ sở hữu (người đang đổi) → chỉ tìm trong kho code của họ.
+    // Code là CÁ NHÂN: user A không thể dùng code của user B.
+    if (ownerId) {
+        const user = users[ownerId];
+        if (!user) return null;
+        const found = user.codes?.find(c => normalizeCode(c.code) === code);
+        if (!found) return null;
+        return { ownerId, user, code: found, users };
+    }
+
+    // Fallback (không truyền ownerId): tìm toàn hệ thống
     for (const userId in users) {
 
         const user = users[userId];

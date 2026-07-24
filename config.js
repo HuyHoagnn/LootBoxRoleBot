@@ -4,7 +4,7 @@ module.exports = {
     MINUTES_PER_CODE: 30,
 
     // TEST MODE: true = bấm Nhận Code luôn ra 1 code, không cần voice
-    TEST_MODE: true,
+    TEST_MODE: false,
 
     // Kênh bot gửi Bill công khai
     BILL_CHANNEL_ID: "",

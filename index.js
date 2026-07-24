@@ -55,20 +55,25 @@ for (const file of fs.readdirSync(eventsPath).filter(f => f.endsWith(".js"))) {
 client.once(Events.ClientReady, () => {
     console.log(`✅ ${client.user.tag} đã online!`);
 
-    // Fix lỗi cộng dư thời gian: nếu bot restart khi user đang trong
-    // voice, joinAt cũ giữ nguyên → tính sai. Reset hết joinAt về null
-    // để chỉ tính thời gian thực tế từ lúc bot sống lại.
+    // Xử lý thời gian khi bot restart: nếu user đang trong voice (joinAt tồn tại),
+    // thời gian TỪ LÚC VÀO VOICE ĐẾN LÚC RESTART sẽ BỊ MẤT nếu chỉ reset null.
+    // Giải pháp: cộng dồn khoảng đó vào voiceTime, rồi đặt joinAt = now để
+    // tiếp tục đếm từ hiện tại (KHÔNG mất thời gian, cũng KHÔNG tính dư).
     const { loadUsers, saveUsers } = require("./utils/database");
     const users = loadUsers();
-    let reset = 0;
+    let carry = 0;
+    const now = Date.now();
     for (const id in users) {
-        if (users[id].joinAt) {
-            users[id].joinAt = null;
-            reset++;
+        const u = users[id];
+        if (u.joinAt) {
+            const mins = Math.round((now - u.joinAt) / 60000);
+            if (mins > 0) u.voiceTime += mins;
+            u.joinAt = now; // tiếp tục đếm từ lúc bot sống lại
+            carry++;
         }
     }
-    if (reset > 0) saveUsers(users);
-    if (reset > 0) console.log(`🔄 Đã reset joinAt của ${reset} user (tránh tính dư thời gian sau restart)`);
+    if (carry > 0) saveUsers(users);
+    if (carry > 0) console.log(`🔄 Đã cộng dồn thời gian voice của ${carry} user qua lần restart (không mất giờ)`);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

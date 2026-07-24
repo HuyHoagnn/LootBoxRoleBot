@@ -34,11 +34,11 @@ module.exports = async (interaction) => {
         interaction.fields.getTextInputValue("code_input")
     );
 
-    const result = findCode(codeInput);
+    const result = findCode(codeInput, interaction.user.id);
 
     if (!result) {
         return interaction.reply({
-            content: "❌ Code không tồn tại.",
+            content: "❌ Code không tồn tại hoặc không thuộc về bạn.",
             flags: MessageFlags.Ephemeral,
         });
     }

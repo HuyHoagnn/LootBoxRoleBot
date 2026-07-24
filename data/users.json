@@ -23,7 +23,21 @@
   "874286442409512980": {
     "voiceTime": 6,
     "claimedMinutes": 0,
+    "joinAt": 1784906582115,
+    "codes": [],
+    "roles": []
+  },
+  "1328961290512896013": {
+    "voiceTime": 1,
+    "claimedMinutes": 0,
     "joinAt": null,
+    "codes": [],
+    "roles": []
+  },
+  "1298681768039415932": {
+    "voiceTime": 4,
+    "claimedMinutes": 0,
+    "joinAt": 1784906586035,
     "codes": [],
     "roles": []
   }
