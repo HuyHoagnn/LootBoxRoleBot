@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 const { homeView } = require("../ui/panelViews");
 
 module.exports = {
@@ -8,7 +8,10 @@ module.exports = {
         .setDescription("Mở bảng điều khiển Lootbox Role"),
 
     async execute(interaction) {
-        await interaction.reply(homeView());
+        await interaction.reply({
+            ...homeView(),
+            flags: MessageFlags.Ephemeral,
+        });
     },
 
 };

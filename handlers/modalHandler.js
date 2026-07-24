@@ -74,7 +74,47 @@ module.exports = async (interaction) => {
     markCodeUsed(result.ownerId, codeInput);
     addRole(result.ownerId, reward);
 
-    // ── Animation mở Lootbox (ephemeral, sửa embed liên tục) ──
+    // ── Tính toán thông tin báo cáo (kiểu bot Valorant VN) ──
+    const { SECONDS_PER_CODE } = require("../config");
+    const totalVoice = result.user.voiceTime ?? 0;
+    const claimed = result.user.claimedSeconds ?? 0;
+    const availableNow = Math.max(0, totalVoice - claimed);
+    const codesEarned = Math.floor(totalVoice / SECONDS_PER_CODE);
+    const remainingForNext = availableNow % SECONDS_PER_CODE;
+    const { formatDuration } = require("../utils/format");
+
+    // ── Gửi báo cáo vào DM ──
+    let dmOk = false;
+    try {
+        const dm = await interaction.user.createDM();
+        await dm.send({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor("#8b5cf6")
+                    .setTitle("🎟 Kết quả đổi Code — Lootbox")
+                    .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
+                    .setDescription(
+                        `🎁 Bạn vừa dùng code **${codeInput}** và nhận được role **${reward.name}**!`
+                    )
+                    .addFields(
+                        { name: "⏰ Tổng thời gian bạn đã treo", value: formatDuration(totalVoice), inline: true },
+                        { name: "🎟 Tổng Code đã được đổi", value: `${codesEarned} Code`, inline: true },
+                        {
+                            name: "⏳ Thời gian còn lại cho lần sau",
+                            value: `${formatDuration(remainingForNext)} (còn ${Math.floor(remainingForNext / SECONDS_PER_CODE * 100)}% tới code tiếp theo)`,
+                            inline: false,
+                        }
+                    )
+                    .setFooter({ text: "Lootbox Role System • Treo voice tiếp để nhận thêm Code!" })
+                    .setTimestamp(),
+            ],
+        });
+        dmOk = true;
+    } catch {
+        // User tắt DM → báo trên channel (ephemeral)
+    }
+
+    // ── Animation mở Lootbox (ephemeral) ──
     await interaction.reply({
         embeds: [frameEmbed(FRAMES[0])],
         flags: MessageFlags.Ephemeral,
@@ -96,6 +136,16 @@ module.exports = async (interaction) => {
                 .setFooter({ text: "Lootbox Role System" })
                 .setTimestamp(),
         ],
+    }).catch(() => null);
+
+    // Phản hồi ephemeral: xác nhận đã gửi DM (hoặc fallback nếu tắt DM)
+    const confirm = dmOk
+        ? `✅ Đã đổi thành công! Chi tiết (giờ treo, code đã đổi, thời gian còn lại) đã gửi vào **DM** của bạn.`
+        : `✅ Đổi thành công role **${reward.name}**! (Không gửi được DM — bạn đã tắt tin nhắn riêng.)\n⏰ Đã treo: ${formatDuration(totalVoice)} • Code đổi được: ${codesEarned} • Còn lại: ${formatDuration(remainingForNext)}`;
+
+    await interaction.followUp({
+        content: confirm,
+        flags: MessageFlags.Ephemeral,
     }).catch(() => null);
 
     // Bill công khai

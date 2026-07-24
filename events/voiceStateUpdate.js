@@ -5,7 +5,11 @@ module.exports = {
 
     async execute(oldState, newState) {
 
-        const userId = newState.id;
+        // ⚠️ VoiceState.id là GUILD ID, KHÔNG phải user id.
+        // Phải lấy qua member.user.id, nếu không user thật sẽ KHÔNG được tính giờ.
+        const member = newState.member;
+        if (!member) return;
+        const userId = member.user.id;
 
         const users = loadUsers();
 
@@ -26,7 +30,7 @@ module.exports = {
 
             saveUsers(users);
 
-            console.log(`${newState.member.user.username} đã vào Voice`);
+            console.log(`${member.user.username} đã vào Voice`);
 
             return;
         }
@@ -49,7 +53,7 @@ module.exports = {
             saveUsers(users);
 
             console.log(
-                `${newState.member.user.username} đã treo ${seconds} giây`
+                `${member.user.username} đã treo ${seconds} giây`
             );
         }
 
