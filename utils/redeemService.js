@@ -1,14 +1,26 @@
 const { loadUsers, saveUsers } = require("./database");
 
+// Chuẩn hóa code: bỏ khoảng trắng, hoa thường, đảm bảo định dạng XXXX-XXXX.
+// Xử lý trường hợp user copy thiếu/thon dấu gạch ngang (do wrap line trong DM).
+function normalizeCode(raw) {
+    let s = (raw || "").trim().toUpperCase().replace(/\s+/g, "");
+    // Nếu thiếu dấu gạch ngang mà đủ 8 ký tự → chèn dấu - ở giữa
+    if (!s.includes("-") && s.length === 8) {
+        s = s.slice(0, 4) + "-" + s.slice(4);
+    }
+    return s;
+}
+
 function findCode(code) {
 
+    code = normalizeCode(code);
     const users = loadUsers();
 
     for (const userId in users) {
 
         const user = users[userId];
 
-        const found = user.codes?.find(c => c.code === code);
+        const found = user.codes?.find(c => normalizeCode(c.code) === code);
 
         if (found) {
             return {
@@ -27,11 +39,12 @@ function findCode(code) {
 
 function markCodeUsed(ownerId, codeText) {
 
+    codeText = normalizeCode(codeText);
     const users = loadUsers();
     const user = users[ownerId];
     if (!user) return false;
 
-    const code = user.codes.find(c => c.code === codeText);
+    const code = user.codes.find(c => normalizeCode(c.code) === codeText);
     if (!code) return false;
 
     code.used = true;
@@ -63,4 +76,5 @@ module.exports = {
     findCode,
     markCodeUsed,
     addRole,
+    normalizeCode,
 };

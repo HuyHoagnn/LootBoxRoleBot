@@ -1,6 +1,7 @@
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 
 const { findCode, markCodeUsed, addRole } = require("../utils/redeemService");
+const { normalizeCode } = require("../utils/redeemService");
 const { randomRole } = require("../utils/roleManager");
 const { giveRole } = require("../services/roleService");
 const generateBill = require("../utils/billGenerator");
@@ -29,10 +30,9 @@ module.exports = async (interaction) => {
     if (!interaction.isModalSubmit()) return;
     if (interaction.customId !== "redeem_modal") return;
 
-    const codeInput = interaction.fields
-        .getTextInputValue("code_input")
-        .trim()
-        .toUpperCase();
+    const codeInput = normalizeCode(
+        interaction.fields.getTextInputValue("code_input")
+    );
 
     const result = findCode(codeInput);
 
