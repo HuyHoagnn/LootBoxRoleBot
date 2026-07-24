@@ -83,41 +83,9 @@ module.exports = async (interaction) => {
     const remainingForNext = availableNow % SECONDS_PER_CODE;
     const { formatDuration } = require("../utils/format");
 
-    // ── Gửi báo cáo vào DM ──
-    let dmOk = false;
-    try {
-        const dm = await interaction.user.createDM();
-        await dm.send({
-            embeds: [
-                new EmbedBuilder()
-                    .setColor("#8b5cf6")
-                    .setTitle("🎟 Kết quả đổi Code — Lootbox")
-                    .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
-                    .setDescription(
-                        `🎁 Bạn vừa dùng code **${codeInput}** và nhận được role **${reward.name}**!`
-                    )
-                    .addFields(
-                        { name: "⏰ Tổng thời gian bạn đã treo", value: formatDuration(totalVoice), inline: true },
-                        { name: "🎟 Tổng Code đã được đổi", value: `${codesEarned} Code`, inline: true },
-                        {
-                            name: "⏳ Thời gian còn lại cho lần sau",
-                            value: `${formatDuration(remainingForNext)} (còn ${Math.floor(remainingForNext / SECONDS_PER_CODE * 100)}% tới code tiếp theo)`,
-                            inline: false,
-                        }
-                    )
-                    .setFooter({ text: "Lootbox Role System • Treo voice tiếp để nhận thêm Code!" })
-                    .setTimestamp(),
-            ],
-        });
-        dmOk = true;
-    } catch {
-        // User tắt DM → báo trên channel (ephemeral)
-    }
-
-    // ── Animation mở Lootbox (ephemeral) ──
+    // ── Animation mở Lootbox (CÔNG KHAI trong kênh) ──
     await interaction.reply({
         embeds: [frameEmbed(FRAMES[0])],
-        flags: MessageFlags.Ephemeral,
     });
 
     for (let i = 1; i < FRAMES.length; i++) {
@@ -127,28 +95,29 @@ module.exports = async (interaction) => {
 
     await sleep(700);
 
+    // ── Reveal kết quả CÔNG KHAI (thay vì DM) ──
     await interaction.editReply({
         embeds: [
             new EmbedBuilder()
                 .setColor("#facc15")
-                .setTitle("🎉 CHÚC MỪNG!")
-                .setDescription(`Bạn nhận được\n\n# ${reward.name}`)
-                .setFooter({ text: "Lootbox Role System" })
+                .setTitle(`🎉 CHÚC MỪNG ${interaction.user.username}!`)
+                .setDescription(
+                    "🎊🎊🎊\n\n" +
+                    `# ${reward.name}\n\n` +
+                    "🎊🎊🎊"
+                )
+                .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 256 }))
+                .addFields(
+                    { name: "⏰ Tổng thời gian treo", value: formatDuration(totalVoice), inline: true },
+                    { name: "🎟 Code đã đổi", value: `${codesEarned}`, inline: true },
+                    { name: "⏳ Còn lại cho lần sau", value: formatDuration(remainingForNext), inline: false }
+                )
+                .setFooter({ text: "Lootbox Role System • Treo voice tiếp để nhận thêm Code!" })
                 .setTimestamp(),
         ],
     }).catch(() => null);
 
-    // Phản hồi ephemeral: xác nhận đã gửi DM (hoặc fallback nếu tắt DM)
-    const confirm = dmOk
-        ? `✅ Đã đổi thành công! Chi tiết (giờ treo, code đã đổi, thời gian còn lại) đã gửi vào **DM** của bạn.`
-        : `✅ Đổi thành công role **${reward.name}**! (Không gửi được DM — bạn đã tắt tin nhắn riêng.)\n⏰ Đã treo: ${formatDuration(totalVoice)} • Code đổi được: ${codesEarned} • Còn lại: ${formatDuration(remainingForNext)}`;
-
-    await interaction.followUp({
-        content: confirm,
-        flags: MessageFlags.Ephemeral,
-    }).catch(() => null);
-
-    // Bill công khai
+    // ── Bill công khai trong kênh ──
     const bill = generateBill(member, reward, codeInput, result.user.voiceTime);
     await interaction.channel.send({ embeds: [bill] }).catch(() => null);
 

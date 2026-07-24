@@ -94,7 +94,7 @@ module.exports = {
         markCodeUsed(result.ownerId, code);
         addRole(result.ownerId, reward);
 
-        // ── Reveal kết quả đẹp ──
+        // ── Reveal kết quả đẹp (CÔNG KHAI trong kênh, không gửi DM) ──
         const totalVoice = result.user.voiceTime ?? 0;
         const claimed = result.user.claimedSeconds ?? 0;
         const availableNow = Math.max(0, totalVoice - claimed);
@@ -121,23 +121,11 @@ module.exports = {
             }],
         }).catch(() => null);
 
-        // Gửi DM báo cáo chi tiết (giống yêu cầu trước)
+        // ── Bill công khai trong kênh ──
         try {
-            const dm = await message.author.createDM();
-            await dm.send({
-                embeds: [{
-                    color: 0x8b5cf6,
-                    title: "🎟 Kết quả đổi Code — Lootbox",
-                    description: `🎁 Bạn vừa dùng code **${code}** và nhận được role **${reward.name}**!`,
-                    fields: [
-                        { name: "⏰ Tổng thời gian bạn đã treo", value: formatDuration(totalVoice), inline: true },
-                        { name: "🎟 Tổng Code đã đổi", value: `${codesEarned} Code`, inline: true },
-                        { name: "⏳ Thời gian còn lại cho lần sau", value: `${formatDuration(remainingForNext)} (còn ${Math.floor(remainingForNext / SECONDS_PER_CODE * 100)}% tới code tiếp theo)`, inline: false },
-                    ],
-                    footer: { text: "Lootbox Role System • Treo voice tiếp để nhận thêm Code!" },
-                    timestamp: new Date().toISOString(),
-                }],
-            }).catch(() => null);
-        } catch { /* user tắt DM */ }
+            const { generateBill } = require("../utils/billGenerator");
+            const bill = generateBill(message.member, reward, code, totalVoice);
+            await message.channel.send({ embeds: [bill] }).catch(() => null);
+        } catch { /* bỏ qua nếu không tạo được bill */ }
     },
 };
