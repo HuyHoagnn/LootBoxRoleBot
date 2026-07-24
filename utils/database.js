@@ -2,7 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const { schedulePush } = require("./githubStore");
 
-const filePath = path.join(__dirname, "../data/users.json");
+// Cho phép test cô lập dùng file riêng qua env USERS_FILE
+const filePath = process.env.USERS_FILE
+    ? path.resolve(process.env.USERS_FILE)
+    : path.join(__dirname, "../data/users.json");
 
 function loadUsers() {
     if (!fs.existsSync(filePath)) return {};

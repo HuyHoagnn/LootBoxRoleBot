@@ -7,7 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "test": "node --test test/bot.test.js",
+    "test": "node --test --test-concurrency=1 test/bot.test.js test/format.test.js test/githubStore.test.js test/redeemFlow.test.js test/messageCreate.test.js",
     "start": "node index.js",
     "deploy": "node deploy-commands.js"
   },

@@ -12,6 +12,7 @@ if (!process.env.TOKEN) {
 const {
     Client,
     GatewayIntentBits,
+    Partials,
     Collection,
     Events,
     MessageFlags,
@@ -29,6 +30,12 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,      // đọc tin nhắn trong server
+        GatewayIntentBits.MessageContent,     // đọc NỘI DUNG tin nhắn (để bắt code)
+    ],
+    partials: [
+        Partials.Message,                      // hỗ trợ message cũ / cache
+        Partials.Channel,
     ],
 });
 
