@@ -1,5 +1,9 @@
 const { loadUsers, saveUsers } = require("./database");
 
+// Bảng ký tự dùng để SINH code (giống codeGenerator.js).
+// Đặc biệt: KHÔNG chứa I, O, 0, 1 → dùng để phân biệt code thật với chat bình thường.
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 // Chuẩn hóa code: bỏ khoảng trắng, hoa thường, đảm bảo định dạng XXXX-XXXX.
 // Xử lý trường hợp user copy thiếu/thon dấu gạch ngang (do wrap line trong DM).
 function normalizeCode(raw) {
@@ -9,6 +13,18 @@ function normalizeCode(raw) {
         s = s.slice(0, 4) + "-" + s.slice(4);
     }
     return s;
+}
+
+// Chỉ coi là "có vẻ là code" khi khớp CHÍNH XÁC bảng ký tự sinh code (CODE_CHARS):
+//   - Có dấu gạch: XXXX-XXXX (mỗi phần 4 ký tự thuộc CODE_CHARS)
+//   - HOẶC 8 ký tự liền thuộc CODE_CHARS (hỗ trợ copy thiếu gạch từ DM)
+// Chat bình thường ("camonanh", "chaudem1", "anh coi r a") chứa chữ thường / 0 / 1 / o / i
+// hoặc dấu cách → KHÔNG khớp → bot không phản ứng.
+function isLikelyCode(raw) {
+    const s = (raw || "").trim().toUpperCase();
+    if (/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/.test(s)) return true;
+    if (/^[A-HJ-NP-Z2-9]{8}$/.test(s)) return true; // 8 ký tự liền, không dấu cách
+    return false;
 }
 
 function findCode(code, ownerId) {
@@ -88,4 +104,6 @@ module.exports = {
     markCodeUsed,
     addRole,
     normalizeCode,
+    isLikelyCode,
+    CODE_CHARS,
 };

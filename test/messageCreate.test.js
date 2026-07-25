@@ -63,12 +63,12 @@ test.describe("messageCreate", { concurrency: 1 }, () => {
             voiceTime: 100000,
             claimedSeconds: 0,
             joinAt: null,
-            codes: [{ code: "CHAT-1234", used: false, createdAt: Date.now(), usedAt: null }],
+            codes: [{ code: "CHAT-2349", used: false, createdAt: Date.now(), usedAt: null }],
             roles: [],
         };
         saveUsers(users);
 
-        const msg = fakeMessage("CHAT-1234", UID);
+        const msg = fakeMessage("CHAT-2349", UID);
         await handler.execute(msg);
 
         const after = loadUsers()[UID];
@@ -97,14 +97,14 @@ test.describe("messageCreate", { concurrency: 1 }, () => {
         const users = loadUsers();
         users["other-msg-user"] = {
             voiceTime: 0, claimedSeconds: 0, joinAt: null,
-            codes: [{ code: "OWN2-9999", used: false, createdAt: Date.now(), usedAt: null }],
+            codes: [{ code: "KWN2-9999", used: false, createdAt: Date.now(), usedAt: null }],
             roles: [],
         };
         saveUsers(users);
 
         let content = "";
         const msg = {
-            content: "OWN2-9999",
+            content: "KWN2-9999",
             author: { id: "stranger", username: "s", createDM: async () => ({}) },
             member: { guild: {} },
             guild: { id: "g1" },
@@ -112,6 +112,51 @@ test.describe("messageCreate", { concurrency: 1 }, () => {
         };
         await handler.execute(msg);
         assert.match(content, /không tồn tại|không thuộc/, "phải báo code không thuộc về bạn");
+    });
+
+    test("tin nhắn bình thường có dấu cách → bỏ qua (không reply)", async () => {
+        const handler = require("../events/messageCreate");
+        let replied = false;
+        const msg = {
+            content: "anh coi r a",
+            author: { id: "x", bot: false, createDM: async () => ({}) },
+            member: { guild: {} },
+            guild: { id: "g1" },
+            reply: async () => { replied = true; return { edit: async () => {} }; },
+        };
+        await handler.execute(msg);
+        assert.strictEqual(replied, false, "tin nhắn thường không được xử lý");
+    });
+
+    test("8 ký tự liền (copy thiếu gạch từ DM) → vẫn được coi là code", async () => {
+        const { isLikelyCode } = require("../utils/redeemService");
+        assert.strictEqual(isLikelyCode("ABCD2349"), true, "8 ký tự liền phải là code");
+        assert.strictEqual(isLikelyCode("ABCD-2349"), true, "XXXX-XXXX phải là code");
+        assert.strictEqual(isLikelyCode("anh coi r a"), false, "tin nhắn thường không phải code");
+        assert.strictEqual(isLikelyCode("hello world"), false, "có dấu cách không phải code");
+    });
+
+    test("chat bình thường không bị nhận nhầm thành code", async () => {
+        const { isLikelyCode } = require("../utils/redeemService");
+        // Các chuỗi chat thường hay gặp — tất cả phải là false
+        // (chỉ bảng CODE_CHARS ABCDEFGHJKLMNPQRSTUVWXYZ23456789 mới hợp lệ)
+        for (const t of [
+            "camonanh",      // 8 chữ thường
+            "chaudem1",      // chứa số 1 (không nằm trong bảng code)
+            "xinchaocacban", // 12 ký tự
+            "hello",         // ngắn
+            "anh coi r a",   // có dấu cách
+            "CamonAnh",      // chữ thường + hoa, không nằm bảng
+            "cảm ơn anh",     // có dấu tiếng Việt
+            "DEPOXY01",      // chứa O và 0 (bị loại khỏi bảng code)
+            "OKLA-1234",     // chứa O,K,A không nằm đúng (O bị loại)
+            "test1234",      // chứa t,e,s (thường, không nằm bảng)
+        ]) {
+            assert.strictEqual(isLikelyCode(t), false, `phải bỏ qua tin nhắn thường: "${t}"`);
+        }
+        // Code thật (từ bảng CODE_CHARS) vẫn nhận đúng
+        assert.strictEqual(isLikelyCode("K7P2-MQ9X"), true, "code thật phải được nhận");
+        assert.strictEqual(isLikelyCode("K7P2MQ9X"), true, "code thật 8 ký tự liền phải được nhận");
     });
 
 });

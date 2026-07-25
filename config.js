@@ -1,7 +1,7 @@
 module.exports = {
 
-    // Bao nhiêu GIÂY voice thì nhận được 1 Code (30 phút = 1800 giây)
-    SECONDS_PER_CODE: 1800,
+    // Bao nhiêu GIÂY voice thì nhận được 1 Code (1 tiếng = 3600 giây)
+    SECONDS_PER_CODE: 3600,
 
     // TEST MODE: true = bấm Nhận Code luôn ra 1 code, không cần voice
     TEST_MODE: false,

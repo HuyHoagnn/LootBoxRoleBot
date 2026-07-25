@@ -1,9 +1,10 @@
-const { normalizeCode } = require("../utils/redeemService");
+const { normalizeCode, isLikelyCode } = require("../utils/redeemService");
 const { findCode, markCodeUsed, addRole } = require("../utils/redeemService");
 const { randomRole } = require("../utils/roleManager");
 const { giveRole } = require("../services/roleService");
 const { formatDuration } = require("../utils/format");
 const { SECONDS_PER_CODE } = require("../config");
+const { MessageFlags } = require("discord.js");
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -40,20 +41,24 @@ module.exports = {
         if (!message.guild) return; // chỉ hoạt động trong server
         if (message.content.startsWith("/")) return; // bỏ qua slash command
 
-        // Trích xuất token giống format code XXXX-XXXX (cho phép copy sai format)
+        // Chỉ xử lý khi tin nhắn GIỐNG code (XXXX-XXXX hoặc 8 ký tự liền).
+        // Tin nhắn bình thường (có dấu cách) → bỏ qua, KHÔNG reply, KHÔNG hiện kênh.
         const raw = message.content.trim();
+        if (!isLikelyCode(raw)) return;
+
         const code = normalizeCode(raw);
-        if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) return; // không phải code → bỏ qua
 
         const result = findCode(code, message.author.id);
         if (!result) {
             return message.reply({
                 content: "❌ Code không tồn tại hoặc không thuộc về bạn.",
+                flags: MessageFlags.Ephemeral, // chỉ người gõ thấy, không hiện kênh tổng
             }).catch(() => null);
         }
         if (result.code.used) {
             return message.reply({
                 content: "❌ Code đã được sử dụng.",
+                flags: MessageFlags.Ephemeral,
             }).catch(() => null);
         }
 
@@ -64,6 +69,7 @@ module.exports = {
         if (!reward) {
             return message.reply({
                 content: "🎉 Bạn đã sở hữu toàn bộ Role.",
+                flags: MessageFlags.Ephemeral,
             }).catch(() => null);
         }
 
