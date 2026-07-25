@@ -90,7 +90,7 @@ test.describe("messageCreate", { concurrency: 1 }, () => {
         assert.strictEqual(replied, false, "tin nhắn thường không được xử lý");
     });
 
-    test("code không thuộc user → báo lỗi", async () => {
+    test("code không thuộc user → im lặng (không báo lỗi công khai)", async () => {
         const { loadUsers, saveUsers } = require("../utils/database");
         const handler = require("../events/messageCreate");
 
@@ -102,16 +102,34 @@ test.describe("messageCreate", { concurrency: 1 }, () => {
         };
         saveUsers(users);
 
-        let content = "";
+        let replied = false;
         const msg = {
             content: "KWN2-9999",
             author: { id: "stranger", username: "s", createDM: async () => ({}) },
             member: { guild: {} },
             guild: { id: "g1" },
-            reply: async (p) => { content = p.content; return { edit: async () => {} }; },
+            reply: async () => { replied = true; return { edit: async () => {} }; },
         };
         await handler.execute(msg);
-        assert.match(content, /không tồn tại|không thuộc/, "phải báo code không thuộc về bạn");
+        assert.strictEqual(replied, false, "code không thuộc user phải im lặng, không reply");
+    });
+
+    test("từ điển nhìn như code (spurzzel) → im lặng, không báo lỗi", async () => {
+        const { isLikelyCode } = require("../utils/redeemService");
+        const handler = require("../events/messageCreate");
+        // spurzzel viết hoa = SPURZZEL, toàn chữ nằm trong bảng code → isLikelyCode true,
+        // nhưng PHẢI im lặng vì không có trong DB (không reply lỗi công khai).
+        assert.strictEqual(isLikelyCode("spurzzel"), true, "SPURZZEL khớp bảng code → vẫn qua bước lọc");
+        let replied = false;
+        const msg = {
+            content: "spurzzel",
+            author: { id: "x", bot: false, createDM: async () => ({}) },
+            member: { guild: {} },
+            guild: { id: "g1" },
+            reply: async () => { replied = true; return { edit: async () => {} }; },
+        };
+        await handler.execute(msg);
+        assert.strictEqual(replied, false, "từ điển spurzzel phải im lặng, KHÔNG báo lỗi");
     });
 
     test("tin nhắn bình thường có dấu cách → bỏ qua (không reply)", async () => {

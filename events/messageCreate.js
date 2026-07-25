@@ -48,13 +48,14 @@ module.exports = {
 
         const code = normalizeCode(raw);
 
+        // ── QUAN TRỌNG: Chỉ phản ứng khi chuỗi ĐÚNG LÀ code thật có trong hệ thống.
+        // Nếu không tìm thấy (kể cả chuỗi nhìn như code nhưng là chat bình thường
+        // như "spurzzel", "camonanh"...) → IM LẶNG, không trả lời, không báo lỗi.
+        // (Ephemeral không có tác dụng trên message.reply thường, nên báo lỗi sẽ
+        //  hiện CÔNG KHAI gây phiền → tốt nhất là không reply khi không khớp.)
         const result = findCode(code, message.author.id);
-        if (!result) {
-            return message.reply({
-                content: "❌ Code không tồn tại hoặc không thuộc về bạn.",
-                flags: MessageFlags.Ephemeral, // chỉ người gõ thấy, không hiện kênh tổng
-            }).catch(() => null);
-        }
+        if (!result) return; // im lặng: code không tồn tại / không thuộc user
+
         if (result.code.used) {
             return message.reply({
                 content: "❌ Code đã được sử dụng.",
